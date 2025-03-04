@@ -12,7 +12,7 @@ The system automatically detects which controller is connected at startup, with 
 - Auto-detection of controller type (NES or Genesis)
 - Support for all standard buttons
 - Visual status indication via WS2812B RGB LED
-- Low-latency performance with 8ms polling rate
+- Low-latency performance with 8ms polling rate (twice per frame)
 
 ## Hardware Connections
 
