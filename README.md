@@ -14,9 +14,13 @@ The system automatically detects which controller is connected at startup, with 
 - Visual status indication via WS2812B RGB LED
 - Low-latency performance with 8ms polling rate (twice per frame)
 
-## Hardware Connections
+## Hardware required
+- RP2040 Zero
+- DB9 Male
+- Mini DIN8 male
+- 8-wire cable
 
-### PC Engine Mini DIN8 Connections (Output) 
+## PC Engine Mini DIN8 Connections (Output) 
 
 | PC Engine Pin | RP2040 GPIO |
 |---------------|-------------|
@@ -43,7 +47,7 @@ The system automatically detects which controller is connected at startup, with 
 | 8       | GND         |
 | 9       | GPIO6       |
 
-### LED Connection
+## LED Connection
 
 The project uses a WS2812B RGB LED for status indication:
 - Yellow pulsing: NES controller detected and working
