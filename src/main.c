@@ -107,15 +107,11 @@ static void initialize_pcepad() {
     gpio_set_dir(PCE_D2, GPIO_OUT);
     gpio_set_dir(PCE_D3, GPIO_OUT);
 
-    gpio_pull_up(PCE_D0);
-    gpio_pull_up(PCE_D1);
-    gpio_pull_up(PCE_D2);
-    gpio_pull_up(PCE_D3);
-
     gpio_put(PCE_D0, 1);
     gpio_put(PCE_D1, 1);
     gpio_put(PCE_D2, 1);
     gpio_put(PCE_D3, 1);
+
     pcepad.buttons_raw = 0xFF;
 }
 
