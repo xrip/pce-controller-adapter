@@ -16,25 +16,27 @@
 #define GENESIS_C_START 6
 
 
-static const uint8_t genesis_outputs[] = { GENESIS_POWER, GENESIS_SELECT };
-static const uint8_t genesis_inputs[] = { GENESIS_UP_Z, GENESIS_DOWN_Y, GENESIS_LEFT_X, GENESIS_RIGHT_MODE, GENESIS_B_A, GENESIS_C_START };
+static bool genesis_sixbuttons = false;
+static const uint8_t genesis_outputs[] = {GENESIS_POWER, GENESIS_SELECT};
+static const uint8_t genesis_inputs[] = {GENESIS_UP_Z, GENESIS_DOWN_Y, GENESIS_LEFT_X, GENESIS_RIGHT_MODE, GENESIS_B_A, GENESIS_C_START};
+
 // Controller state structure
 typedef union {
-    uint16_t buttons_raw;  // Raw button state for fast processing
+    uint16_t buttons_raw; // Raw button state for fast processing
     struct {
-        uint16_t up    : 1;
-        uint16_t down  : 1;
-        uint16_t left  : 1;
-        uint16_t right : 1;
-        uint16_t a     : 1;
-        uint16_t b     : 1;
-        uint16_t c     : 1;
-        uint16_t x     : 1;
-        uint16_t y     : 1;
-        uint16_t z     : 1;
-        uint16_t start : 1;
-        uint16_t mode  : 1;
-        uint16_t _pad  : 4;  // Padding to 16 bits
+        uint16_t up: 1;
+        uint16_t down: 1;
+        uint16_t left: 1;
+        uint16_t right: 1;
+        uint16_t a: 1;
+        uint16_t b: 1;
+        uint16_t c: 1;
+        uint16_t x: 1;
+        uint16_t y: 1;
+        uint16_t z: 1;
+        uint16_t start: 1;
+        uint16_t mode: 1;
+        uint16_t _pad: 4; // Padding to 16 bits
     } buttons;
 } genesis_state_t;
 
@@ -63,46 +65,49 @@ static inline bool genesis_init() {
 
 
 static inline void genesis_read() {
-    gpio_put(GENESIS_SELECT, 1);
-    busy_wait_us(20);
+    genesis_sixbuttons = false;
 
-    genesis.buttons.up = gpio_get(GENESIS_UP_Z);
-    genesis.buttons.down = gpio_get(GENESIS_DOWN_Y);
-    genesis.buttons.left = gpio_get(GENESIS_LEFT_X);
-    genesis.buttons.right = gpio_get(GENESIS_RIGHT_MODE);
+    for (uint8_t cycle = 0; cycle < 8; cycle++) {
+        gpio_put(GENESIS_SELECT, cycle & 1);
+        busy_wait_us(10);
 
-    genesis.buttons.b = gpio_get(GENESIS_B_A);
-    genesis.buttons.c = gpio_get(GENESIS_C_START);
+        switch (cycle) {
+            case 2:
+                genesis.buttons.a = gpio_get(GENESIS_B_A);
+                genesis.buttons.start = gpio_get(GENESIS_C_START);
+                break;
+            case 3:
+                genesis.buttons.up = gpio_get(GENESIS_UP_Z);
+                genesis.buttons.down = gpio_get(GENESIS_DOWN_Y);
+                genesis.buttons.left = gpio_get(GENESIS_LEFT_X);
+                genesis.buttons.right = gpio_get(GENESIS_RIGHT_MODE);
 
-    gpio_put(GENESIS_SELECT, 0);
-    busy_wait_us(20);
+                genesis.buttons.b = gpio_get(GENESIS_B_A);
+                genesis.buttons.c = gpio_get(GENESIS_C_START);
+                break;
+            case 4:
+                genesis_sixbuttons = !gpio_get(GENESIS_UP_Z) && !gpio_get(GENESIS_DOWN_Y);
+                break;
+            case 5:
+                if (genesis_sixbuttons) {
+                    genesis.buttons.x = gpio_get(GENESIS_LEFT_X);
+                    genesis.buttons.y = gpio_get(GENESIS_DOWN_Y);
+                    genesis.buttons.z = gpio_get(GENESIS_UP_Z);
+                    genesis.buttons.mode = gpio_get(GENESIS_RIGHT_MODE);
+                }
+                break;
+        }
+    }
 
-    genesis.buttons.a = gpio_get(GENESIS_B_A);
-    genesis.buttons.start = gpio_get(GENESIS_C_START);
-
-    gpio_put(GENESIS_SELECT, 1);
-    busy_wait_us(20);
-    gpio_put(GENESIS_SELECT, 0);
-    busy_wait_us(20);
-    gpio_put(GENESIS_SELECT, 1);
-    busy_wait_us(20);
-    gpio_put(GENESIS_SELECT, 0);
-    busy_wait_us(20);
-    gpio_put(GENESIS_SELECT, 1);
-    busy_wait_us(20);
-    gpio_put(GENESIS_SELECT, 0);
-    busy_wait_us(20);
-
-    genesis.buttons.x = gpio_get(GENESIS_LEFT_X);
-    genesis.buttons.y = gpio_get(GENESIS_DOWN_Y);
-    genesis.buttons.z = gpio_get(GENESIS_UP_Z);
-/*
+/** /
     static uint16_t last = 0xffff;
     if (last != genesis.buttons_raw) {
-        printf("up: %u, down: %u, left: %u, right: %u, a: %u, b: %u, c: %u, start: %u\n", genesis.buttons.up,  genesis.buttons.down, genesis.buttons.left, genesis.buttons.right, genesis.buttons.a, genesis.buttons.b, genesis.buttons.c, genesis.buttons.start);
+        printf("up: %u, down: %u, left: %u, right: %u, a: %u, b: %u, c: %u, start: %u, x: %u, y: %u, z: %u, mode: %u\n"
+               , genesis.buttons.up, genesis.buttons.down, genesis.buttons.left, genesis.buttons.right, genesis.buttons.a, genesis.buttons.b, genesis.buttons.c,
+               genesis.buttons.start, genesis.buttons.x, genesis.buttons.y, genesis.buttons.z, genesis.buttons.mode);
         last = genesis.buttons_raw;
     }
-    */
+/**/
 }
 
 

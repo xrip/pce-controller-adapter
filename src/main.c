@@ -9,6 +9,7 @@
 #include "ws2812b.h"
 #include "nespad.h"
 #include "genesispad.h"
+#include "pico/stdio_usb.h"
 
 // PC Engine connector pinout (facing console)
 /*
@@ -71,17 +72,16 @@ PCE | RP2040
 #define PCE_D3 29 // Pin 5
 
 
-
 typedef union {
-    uint8_t buttons_raw;  // Raw button state for fast processing
+    uint8_t buttons_raw; // Raw button state for fast processing
     struct {
-        uint8_t up    : 1;
-        uint8_t down  : 1;
-        uint8_t left  : 1;
-        uint8_t right : 1;
-        uint8_t a     : 1;
-        uint8_t b     : 1;
-        uint8_t start : 1;
+        uint8_t up: 1;
+        uint8_t down: 1;
+        uint8_t left: 1;
+        uint8_t right: 1;
+        uint8_t a: 1;
+        uint8_t b: 1;
+        uint8_t start: 1;
         uint8_t select: 1;
     } buttons;
 } pcepad_t;
@@ -135,7 +135,7 @@ static void initialize_pcepad() {
             pcepad.buttons.a = genesis.buttons.a;
             pcepad.buttons.b = genesis.buttons.b;
             pcepad.buttons.start = genesis.buttons.start;
-            pcepad.buttons.select = genesis.buttons.c;
+            pcepad.buttons.select = genesis.buttons.mode & genesis.buttons.c;
             sleep_ms(8);
         }
     }
@@ -169,32 +169,47 @@ static void initialize_pcepad() {
 
     sleep_ms(33);
 
-    // stdio_usb_init();
+    stdio_usb_init();
     multicore_launch_core1(second_core);
 
     sleep_ms(33);
     initialize_pcepad();
 
-
+    uint8_t cycle = 0, last_select = 0;
+    uint8_t current_controller = 0;
     while (true) {
         if (!gpio_get(PCE_ENABLE)) {
-            if (gpio_get(PCE_SELECT)) {
-                gpio_put(PCE_D0, pcepad.buttons.up);
-                gpio_put(PCE_D1, pcepad.buttons.right);
-                gpio_put(PCE_D2, pcepad.buttons.down);
-                gpio_put(PCE_D3, pcepad.buttons.left);
+            const uint8_t select = gpio_get(PCE_SELECT);
+
+            if (current_controller == 0) {
+                if (select) {
+                    gpio_put(PCE_D0, pcepad.buttons.up);
+                    gpio_put(PCE_D1, pcepad.buttons.right);
+                    gpio_put(PCE_D2, pcepad.buttons.down);
+                    gpio_put(PCE_D3, pcepad.buttons.left);
+                } else {
+                    gpio_put(PCE_D0, pcepad.buttons.a);
+                    gpio_put(PCE_D1, pcepad.buttons.b);
+                    gpio_put(PCE_D2, pcepad.buttons.select);
+                    gpio_put(PCE_D3, pcepad.buttons.start);
+                }
             } else {
-                gpio_put(PCE_D0, pcepad.buttons.a);
-                gpio_put(PCE_D1, pcepad.buttons.b);
-                gpio_put(PCE_D2, pcepad.buttons.select);
-                gpio_put(PCE_D3, pcepad.buttons.start);
+                gpio_put(PCE_D0, 1);
+                gpio_put(PCE_D1, 1);
+                gpio_put(PCE_D2, 1);
+                gpio_put(PCE_D3, 1);
+            }
+
+            if (select != last_select) {
+                last_select = select;
+                cycle++;
+                current_controller = cycle >> 1;
             }
         } else {
-            gpio_put(PCE_D0, 1);
-            gpio_put(PCE_D1, 1);
-            gpio_put(PCE_D2, 1);
-            gpio_put(PCE_D3, 1);
+            cycle = 0;
+            current_controller = 0;
         }
     }
+
     __unreachable();
 }

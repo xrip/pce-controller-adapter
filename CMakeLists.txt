@@ -42,3 +42,10 @@ set(PICO_COPY_TO_RAM 1)
 pico_enable_stdio_usb(${PROJECT_NAME} 1)
 target_link_options(${PROJECT_NAME} PRIVATE -Xlinker --print-memory-usage --data-sections --function-sections)
 pico_add_extra_outputs(${PROJECT_NAME})
+
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND picotool info ${OUTPUT_DIR}/${PROJECT_NAME}.uf2 &&
+        picotool reboot -f -u & ping -n 3 127.1> nul &&
+        picotool load ${OUTPUT_DIR}/${PROJECT_NAME}.uf2 &&
+        picotool reboot
+)
