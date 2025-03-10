@@ -79,8 +79,12 @@ typedef union {
         uint8_t down: 1;
         uint8_t left: 1;
         uint8_t right: 1;
-        uint8_t a: 1;
-        uint8_t b: 1;
+        uint8_t i: 1;
+        uint8_t ii: 1;
+        uint8_t iii: 1;
+        uint8_t iv: 1;
+        uint8_t v: 1;
+        uint8_t vi: 1;
         uint8_t start: 1;
         uint8_t select: 1;
     } buttons;
@@ -122,7 +126,7 @@ static void initialize_pcepad() {
     // Check if we have Genesis gamepad connected
     if (genesis_init()) {
         while (1) {
-            set_ws2812b_HSV(0, WS2812_CYAN, 255, brightness--);
+            set_ws2812b_HSV(0, genesis_sixbuttons ? WS2812_PURPLE : WS2812_CYAN, 255, brightness--);
             if (brightness == 63) brightness = 127;
 
             genesis_read();
@@ -132,8 +136,8 @@ static void initialize_pcepad() {
             pcepad.buttons.down = genesis.buttons.down;
             pcepad.buttons.left = genesis.buttons.left;
 
-            pcepad.buttons.a = genesis.buttons.a;
-            pcepad.buttons.b = genesis.buttons.b;
+            pcepad.buttons.i = genesis.buttons.b;
+            pcepad.buttons.ii = genesis.buttons.a;
             pcepad.buttons.start = genesis.buttons.start;
             pcepad.buttons.select = genesis.buttons.mode & genesis.buttons.c;
             sleep_ms(8);
@@ -154,8 +158,8 @@ static void initialize_pcepad() {
         pcepad.buttons.down = !(nespad_state & DPAD_DOWN);
         pcepad.buttons.left = !(nespad_state & DPAD_LEFT);
 
-        pcepad.buttons.a = !(nespad_state & DPAD_A);
-        pcepad.buttons.b = !(nespad_state & DPAD_B);
+        pcepad.buttons.i = !(nespad_state & DPAD_A);
+        pcepad.buttons.ii = !(nespad_state & DPAD_B);
         pcepad.buttons.start = !(nespad_state & DPAD_START);
         pcepad.buttons.select = !(nespad_state & DPAD_SELECT);
 
@@ -169,16 +173,18 @@ static void initialize_pcepad() {
 
     sleep_ms(33);
 
-    stdio_usb_init();
+    // stdio_usb_init();
     multicore_launch_core1(second_core);
 
     sleep_ms(33);
     initialize_pcepad();
 
-    uint8_t cycle = 0, last_select = 0;
-    uint8_t current_controller = 0;
+    uint8_t cycle = 0, last_select = 0, current_controller = 0;
+
     while (true) {
-        if (!gpio_get(PCE_ENABLE)) {
+        const uint8_t enable = gpio_get(PCE_ENABLE);
+
+        if (!enable) {
             const uint8_t select = gpio_get(PCE_SELECT);
 
             if (current_controller == 0) {
@@ -188,8 +194,8 @@ static void initialize_pcepad() {
                     gpio_put(PCE_D2, pcepad.buttons.down);
                     gpio_put(PCE_D3, pcepad.buttons.left);
                 } else {
-                    gpio_put(PCE_D0, pcepad.buttons.a);
-                    gpio_put(PCE_D1, pcepad.buttons.b);
+                    gpio_put(PCE_D0, pcepad.buttons.i);
+                    gpio_put(PCE_D1, pcepad.buttons.ii);
                     gpio_put(PCE_D2, pcepad.buttons.select);
                     gpio_put(PCE_D3, pcepad.buttons.start);
                 }
