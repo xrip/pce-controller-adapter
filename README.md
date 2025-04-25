@@ -7,6 +7,12 @@ An RP2040-based adapter that allows you to use your Famicom/NES clone gamepad wi
 This project provides a bridge between Famiclone/Genesis controllers and the PC Engine console. It uses an RP2040 microcontroller (like the Raspberry Pi Pico) to read input from standard NES and Sega Genesis controllers and translate those inputs to the PC Engine controller protocol.
 The system automatically detects which controller is connected at startup, with Genesis detection taking priority.
 
+<img src="https://github.com/user-attachments/assets/9da0fe81-0740-4952-b68c-200be59f9244" width=400>
+<img src="https://github.com/user-attachments/assets/2c51bea0-37c1-49ba-bdb0-a4e6d421fa1b" width=400>
+<img src="https://github.com/user-attachments/assets/93c4d1c6-8894-41a7-abff-7e9aaeef95c0" width=400>
+<img src="https://github.com/user-attachments/assets/df543db1-3c9e-47ef-a518-976dd1d149ac" width=400>
+
+
 ## Features
 
 - Auto-detection of controller type (NES or Genesis)
